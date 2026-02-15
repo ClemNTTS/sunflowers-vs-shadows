@@ -1,4 +1,13 @@
-export type EntityType = "PLAYER" | "MONSTER" | "XP" | "POTION";
+export type EntityType = "PLAYER" | "MONSTER" | "BOSS" | "XP" | "POTION";
+
+export interface Zone {
+  id: string;
+  name: string;
+  movesToBoss: number;
+  boss: Entity;
+  baseMonsterHp: number;
+  baseMonsterAtk: number;
+}
 
 export interface Entity {
   type: EntityType;
@@ -8,6 +17,7 @@ export interface Entity {
   level?: number;
   xp?: number;
   maxHp?: number;
+  bonusHeal?: number;
   upgrades?: Upgrade[];
 }
 
@@ -32,13 +42,15 @@ export interface Upgrade {
 }
 
 export interface MetaData {
-  permanentStats: {
-    baseHp: number;
-    baseAtk: number;
-    baseArmor: number;
-    baseHealBonus: number;
-  };
+  permanentStats: PermanentStats;
   zones: {
     [zoneId: string]: number;
   };
+}
+
+export interface PermanentStats {
+  baseHp: number;
+  baseAtk: number;
+  baseArmor: number;
+  baseHealBonus: number;
 }

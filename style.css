@@ -17,7 +17,7 @@ body {
   margin: 0;
   background-color: var(--background-color);
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   min-width: 320px;
@@ -190,4 +190,49 @@ body {
 .inventory-item:hover .tooltip {
   visibility: visible;
   opacity: 1;
+}
+
+#main-menu {
+  position: fixed;
+
+  width: 100dvw;
+  height: 100dvh;
+  background-color: rgba(30, 39, 46, 1);
+  padding: 40px;
+  border-radius: 20px;
+  border: 3px solid #f1c40f;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+  display: block;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+#main-menu.visible {
+  display: block;
+}
+
+#main-menu button {
+  background-color: #f1c40f;
+  border: none;
+  border-radius: 8px;
+  color: #2c3e50;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 0 #d4ac0d;
+}
+
+#main-menu button:hover {
+  background-color: #d0a90d;
+  scale: 1.1;
+  box-shadow: 0 6px 0 #c09c0c;
+}
+
+#main-menu button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #d4ac0d;
 }

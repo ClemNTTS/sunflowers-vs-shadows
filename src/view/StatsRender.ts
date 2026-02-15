@@ -7,6 +7,13 @@ export function updatePlayerStats(gameEngine: GameEngine) {
   const atkDiv = document.getElementById("stats-atk");
   const armorDiv = document.getElementById("stats-armor");
   const inventoryContainer = document.getElementById("stats-inventory"); //
+  const bossTimerDiv = document.getElementById("boss-timer");
+  if (bossTimerDiv) {
+    bossTimerDiv.innerText =
+      gameEngine.getRemainingMoves() > 0
+        ? `Boss in: ${gameEngine.getRemainingMoves()} moves`
+        : "BOSS ARRIVED !";
+  }
 
   const player = gameEngine
     .getGrid()
@@ -47,6 +54,7 @@ export function createStatsDiv() {
   const statsDiv = document.createElement("div");
   statsDiv.id = "stats-container";
   statsDiv.innerHTML = `
+  <div id="boss-timer" style="color: #f1c40f; font-weight: bold;">Boss in: 30 moves</div>
   <div id="stats-level">Level: 1</div>
   <div id="stats-xp">XP: 0</div>
   <div id="stats-hp">❤️: 0/0</div>

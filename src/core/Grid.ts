@@ -1,20 +1,27 @@
-import type { Cell, Direction, Entity, EntityType } from "./types";
+import type {
+  Cell,
+  Direction,
+  Entity,
+  EntityType,
+  PermanentStats,
+} from "./types";
 
 export class Grid {
   private readonly cells: Cell[][];
   public readonly size: number = 4;
   public player: Entity;
 
-  constructor() {
+  constructor(metadata: PermanentStats) {
     this.cells = this.createEmptyGrid();
     const sunflower: Entity = {
       type: "PLAYER",
-      hp: 10,
-      atk: 2,
-      armor: 0,
+      hp: metadata.baseHp,
+      atk: metadata.baseAtk,
+      armor: metadata.baseArmor,
+      bonusHeal: metadata.baseHealBonus,
       level: 1,
       xp: 0,
-      maxHp: 10,
+      maxHp: metadata.baseHp,
       upgrades: [],
     };
     this.player = sunflower;

@@ -3,9 +3,15 @@ import { createStatsDiv, updatePlayerStats } from "../view/StatsRender";
 import { DIRECTIONS } from "./constants";
 import { Grid } from "./Grid";
 import * as PIXI from "pixi.js";
-import type { Entity } from "./types";
+import type { Entity, Zone } from "./types";
 import { UpgradeHandler } from "./UpgradeHandler";
-import { setOverlayEvents, showUpgradeScreen } from "../view/utils";
+import {
+  setOverlayEvents,
+  showUpgradeScreen,
+  showVictoryScreen,
+  updateMenuUI,
+} from "../view/utils";
+import type { MetaManager } from "./MetaManager";
 
 export class GameEngine {
   private grid: Grid;
@@ -13,12 +19,25 @@ export class GameEngine {
   private upgradeHandler: UpgradeHandler;
   private isPaused: boolean = false;
   private readonly difficultyMultiplier: number;
+  private remainingMoves: number;
+  private metadataManager: MetaManager;
+  private zone: Zone;
+  private boundInputListener: ((e: KeyboardEvent) => void) | null = null;
 
-  constructor(app: PIXI.Application, difficultyMultiplier: number) {
-    this.grid = new Grid();
+  constructor(
+    app: PIXI.Application,
+    difficultyMultiplier: number,
+    metadataManager: MetaManager,
+    zone: Zone,
+  ) {
+    this.metadataManager = metadataManager;
+    const metadata = metadataManager.getStats();
+    this.grid = new Grid(metadata);
     this.gridViewer = new GridView(app);
     this.upgradeHandler = new UpgradeHandler(this.grid.player);
     this.difficultyMultiplier = difficultyMultiplier;
+    this.remainingMoves = zone.movesToBoss;
+    this.zone = zone;
   }
 
   public start() {
@@ -42,7 +61,7 @@ export class GameEngine {
   }
 
   private setupInputs() {
-    window.addEventListener("keydown", (event) => {
+    this.boundInputListener = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         this.isPaused = !this.isPaused;
       }
@@ -60,11 +79,30 @@ export class GameEngine {
         this.spawnRandomEntity();
       }
 
+      //BOSS wining check
+      const entities = this.grid.getEntities();
+      const bossStillAlive = entities.some((e) => e.entity.type === "BOSS");
+
+      if (this.remainingMoves === 0 && !bossStillAlive) {
+        this.handleZoneWin();
+      }
+
       //LEVEL-UP
       if (this.grid.player) {
         this.handleLevelUp(this.grid.player);
       } else {
         console.log("⚠️ Warning : No player detected !");
+      }
+
+      //REMAINING MOVES
+      if (moved && moved.moved) {
+        this.remainingMoves = Math.max(0, this.remainingMoves - 1);
+
+        if (this.remainingMoves === 0) {
+          this.spawnBoss();
+        } else {
+          this.spawnRandomEntity();
+        }
       }
 
       //RENDERING
@@ -79,7 +117,8 @@ export class GameEngine {
           0xe74c3c,
         );
       }
-    });
+    };
+    window.addEventListener("keydown", this.boundInputListener);
   }
 
   private spawnRandomEntity() {
@@ -95,10 +134,10 @@ export class GameEngine {
       } else if (type === "MONSTER") {
         this.grid.setValue(x, y, {
           type,
-          hp: 5,
-          atk: 1,
-          armor: 0,
-          maxHp: 5,
+          hp: Math.round(5 * (1 + this.difficultyMultiplier / 10)),
+          atk: Math.round(2 * (1 + this.difficultyMultiplier / 10)),
+          armor: Math.round(0 * (1 + this.difficultyMultiplier / 10)),
+          maxHp: Math.round(5 * (1 + this.difficultyMultiplier / 10)),
         });
         return;
       }
@@ -121,7 +160,7 @@ export class GameEngine {
 
       showUpgradeScreen(rolledUpgrades, (upgrade) => {
         this.upgradeHandler.addUpgrade(upgrade);
-        if (upgrade.trigger === "onLevelUp" || "passive") {
+        if (upgrade.trigger === "onLevelUp" || upgrade.trigger === "passive") {
           upgrade.effect(player);
         }
         this.isPaused = false;
@@ -129,4 +168,45 @@ export class GameEngine {
       });
     }
   }
+
+  public getRemainingMoves(): number {
+    return this.remainingMoves;
+  }
+
+  private handleZoneWin() {
+    this.isPaused = true;
+    const zoneId = this.zone.id;
+    const nextLevel = this.metadataManager.getZoneProgress(zoneId) + 1;
+    this.metadataManager.setZoneProgress(zoneId, nextLevel);
+
+    showVictoryScreen((statId) => {
+      const value = statId === "baseHp" ? 2 : 1;
+      this.metadataManager.updateStat(statId as any, value);
+
+      this.exitToMenu();
+    });
+  }
+
+  private exitToMenu() {
+    this.destroy();
+
+    const mainMenu = document.getElementById("main-menu");
+    if (mainMenu) {
+      mainMenu.style.display = "block";
+      updateMenuUI();
+    }
+  }
+
+  public destroy() {
+    if (this.boundInputListener) {
+      window.removeEventListener("keydown", this.boundInputListener);
+    }
+
+    this.gridViewer.destroy();
+
+    const statsContainer = document.getElementById("stats-container");
+    if (statsContainer) statsContainer.remove();
+  }
+
+  spawnBoss() {}
 }

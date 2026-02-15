@@ -166,4 +166,15 @@ export class GridView {
       onComplete: () => popup.destroy(),
     });
   }
+
+  public destroy() {
+    this.spriteMap.forEach((sprite) => {
+      gsap.killTweensOf(sprite.container);
+      sprite.container.destroy({ children: true });
+    });
+    this.spriteMap.clear();
+
+    this.backgroundContainer.destroy({ children: true });
+    this.entityContainer.destroy({ children: true });
+  }
 }
