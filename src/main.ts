@@ -9,8 +9,8 @@ const metaManager = new MetaManager();
 
 async function init() {
   await app.init({
-    width: 800,
-    height: 800,
+    resizeTo: window,
+    antialias: true,
     backgroundColor: 0x101010,
   });
   document.body.appendChild(app.canvas);

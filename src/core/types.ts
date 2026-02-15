@@ -1,3 +1,5 @@
+import type { GameEngine } from "./GameEngine";
+
 export type EntityType = "PLAYER" | "MONSTER" | "BOSS" | "XP" | "POTION";
 
 export interface Zone {
@@ -19,6 +21,9 @@ export interface Entity {
   maxHp?: number;
   bonusHeal?: number;
   upgrades?: Upgrade[];
+  actionCount?: number;
+  actions?: BossAction[];
+  currentActionIndex?: number;
 }
 
 export type Cell = Entity | null;
@@ -53,4 +58,12 @@ export interface PermanentStats {
   baseAtk: number;
   baseArmor: number;
   baseHealBonus: number;
+}
+
+export interface BossAction {
+  id: string;
+  cooldown: number; // Tous les combien de tours ?
+  description: string;
+  execute: (game: GameEngine, bossPos: { x: number; y: number }) => void;
+  preview?: (game: GameEngine, bossPos: { x: number; y: number }) => void; // Pour prévenir le joueur au tour d'avant
 }

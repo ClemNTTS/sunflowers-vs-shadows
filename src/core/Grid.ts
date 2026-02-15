@@ -105,7 +105,7 @@ export class Grid {
           targetPos: { x: newX, y: newY },
           type: "PLAYER",
         };
-      } else if (targetCell.type === "MONSTER") {
+      } else if (targetCell.type === "MONSTER" || targetCell.type === "BOSS") {
         targetCell.hp = Math.max(0, targetCell.hp - playerEntry.entity.atk);
         playerEntry.entity.hp = Math.max(
           0,

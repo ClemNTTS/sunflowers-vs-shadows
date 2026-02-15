@@ -1,6 +1,6 @@
 import { GridView } from "../view/GridView";
 import { createStatsDiv, updatePlayerStats } from "../view/StatsRender";
-import { DIRECTIONS } from "./constants";
+import { DIRECTIONS, VOID_PULSE } from "./constants";
 import { Grid } from "./Grid";
 import * as PIXI from "pixi.js";
 import type { Entity, Zone } from "./types";
@@ -15,7 +15,7 @@ import type { MetaManager } from "./MetaManager";
 
 export class GameEngine {
   private grid: Grid;
-  private gridViewer: GridView;
+  public gridViewer: GridView;
   private upgradeHandler: UpgradeHandler;
   private isPaused: boolean = false;
   private readonly difficultyMultiplier: number;
@@ -76,7 +76,7 @@ export class GameEngine {
       if (event.key === "ArrowRight")
         moved = this.grid.movePlayer(DIRECTIONS.RIGHT);
       if (moved) {
-        this.spawnRandomEntity();
+        this.processBossTurn();
       }
 
       //BOSS wining check
@@ -85,6 +85,7 @@ export class GameEngine {
 
       if (this.remainingMoves === 0 && !bossStillAlive) {
         this.handleZoneWin();
+        return;
       }
 
       //LEVEL-UP
@@ -98,7 +99,7 @@ export class GameEngine {
       if (moved && moved.moved) {
         this.remainingMoves = Math.max(0, this.remainingMoves - 1);
 
-        if (this.remainingMoves === 0) {
+        if (this.remainingMoves === 0 && !bossStillAlive) {
           this.spawnBoss();
         } else {
           this.spawnRandomEntity();
@@ -109,10 +110,9 @@ export class GameEngine {
       this.refreshView();
       if (moved && moved?.damageDealt > 0) {
         this.gridViewer.showPopupText(
-          moved.targetPos.x * (this.gridViewer.tileSize + 10) +
-            this.gridViewer.tileSize / 2,
-          moved.targetPos.y * (this.gridViewer.tileSize + 10) +
-            this.gridViewer.tileSize / 2,
+          this.gridViewer.tileSize +
+            this.gridViewer.gridToPixels(moved.targetPos.x),
+          this.gridViewer.gridToPixels(moved.targetPos.y),
           `-${moved.damageDealt}`,
           0xe74c3c,
         );
@@ -208,5 +208,33 @@ export class GameEngine {
     if (statsContainer) statsContainer.remove();
   }
 
-  spawnBoss() {}
+  private spawnBoss() {
+    const emptyCells = this.grid.getEmptyCells();
+    if (emptyCells.length > 0) {
+      const { x, y } =
+        emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      const bossData = { ...this.zone.boss };
+
+      bossData.actionCount = 0;
+      bossData.actions = [VOID_PULSE];
+
+      this.grid.setValue(x, y, bossData);
+    }
+  }
+
+  private processBossTurn() {
+    const entities = this.grid.getEntities();
+    const bossEntry = entities.find((e) => e.entity.type === "BOSS");
+
+    if (bossEntry) {
+      const boss = bossEntry.entity;
+      boss.actionCount = (boss.actionCount || 0) + 1;
+
+      const currentAction = boss.actions?.[0]; // On prend la première action pour l'instant
+      if (currentAction && boss.actionCount >= currentAction.cooldown) {
+        currentAction.execute(this, { x: bossEntry.x, y: bossEntry.y });
+        boss.actionCount = 0;
+      }
+    }
+  }
 }
