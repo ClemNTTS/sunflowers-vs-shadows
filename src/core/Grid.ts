@@ -3,13 +3,10 @@ import type { Cell, Direction, Entity, EntityType } from "./types";
 export class Grid {
   private readonly cells: Cell[][];
   public readonly size: number = 4;
+  public player: Entity;
 
   constructor() {
     this.cells = this.createEmptyGrid();
-  }
-
-  public init() {
-    const emptyCells = this.getEmptyCells();
     const sunflower: Entity = {
       type: "PLAYER",
       hp: 10,
@@ -17,12 +14,19 @@ export class Grid {
       armor: 0,
       level: 1,
       xp: 0,
+      maxHp: 10,
+      upgrades: [],
     };
+    this.player = sunflower;
+  }
+
+  public init() {
+    const emptyCells = this.getEmptyCells();
 
     if (emptyCells.length > 0) {
       const randomIndex = Math.floor(Math.random() * emptyCells.length);
       const { x, y } = emptyCells[randomIndex];
-      this.setValue(x, y, sunflower);
+      this.setValue(x, y, this.player);
     }
   }
 

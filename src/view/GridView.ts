@@ -102,10 +102,13 @@ export class GridView {
       if (entity.entity.type === "PLAYER") {
         sprite.text.text = `Lvl ${entity.entity.level}`;
       } else if (entity.entity.type === "MONSTER") {
-        sprite.text.text = `HP ${entity.entity.hp}`;
+        sprite.text.text = `🗡️ ${entity.entity.atk}`;
       }
 
-      const maxHp = entity.entity.type === "PLAYER" ? 10 : 5;
+      let maxHp = entity.entity.type === "PLAYER" ? 10 : 5;
+      if (entity.entity.maxHp) {
+        maxHp = entity.entity.maxHp;
+      }
       const ratio = Math.max(0, entity.entity.hp / maxHp);
 
       gsap.to(sprite.healthBar, { width: 40 * ratio, duration: 0.3 });
