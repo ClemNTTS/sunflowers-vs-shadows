@@ -16,8 +16,9 @@ export class UpgradeHandler {
 
     while (returnArray.length < 3) {
       const randomIndex = Math.floor(Math.random() * catalog.length);
-      if (!returnArray.includes(UPGRADE_CATALOG[randomIndex])) {
-        returnArray.push(UPGRADE_CATALOG[randomIndex]);
+      const candidate = catalog[randomIndex];
+      if (!returnArray.some(u => u.id === candidate.id)) {
+        returnArray.push(candidate);
       }
     }
     return returnArray;

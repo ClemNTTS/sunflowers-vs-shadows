@@ -9,10 +9,16 @@ export function updatePlayerStats(gameEngine: GameEngine) {
   const inventoryContainer = document.getElementById("stats-inventory"); //
   const bossTimerDiv = document.getElementById("boss-timer");
   if (bossTimerDiv) {
-    bossTimerDiv.innerText =
-      gameEngine.getRemainingMoves() > 0
-        ? `Boss in: ${gameEngine.getRemainingMoves()} moves`
-        : "BOSS ARRIVED !";
+    if (gameEngine.bossFightTimer !== null) {
+      bossTimerDiv.innerText = `Time left: ${gameEngine.bossFightTimer}`;
+      bossTimerDiv.style.color = "#e74c3c"; // Make it red and urgent
+    } else {
+      bossTimerDiv.innerText =
+        gameEngine.remainingMoves > 0
+          ? `Boss in: ${gameEngine.remainingMoves} moves`
+          : "BOSS INCOMING!";
+      bossTimerDiv.style.color = "#f1c40f";
+    }
   }
 
   const player = gameEngine
@@ -23,7 +29,7 @@ export function updatePlayerStats(gameEngine: GameEngine) {
   if (player) {
     const { entity } = player;
     if (hpDiv) hpDiv.innerText = `❤️: ${entity.hp}/${entity.maxHp}`;
-    if (xpDiv) xpDiv.innerText = `XP: ${entity.xp}`;
+    if (xpDiv) xpDiv.innerText = `XP: ${entity.xp}/${(entity.level || 1) * 5}`;
     if (levelDiv) levelDiv.innerText = `Level: ${entity.level}`;
     if (atkDiv) atkDiv.innerText = `⚔️: ${entity.atk}`;
     if (armorDiv) armorDiv.innerText = `🛡️: ${entity.armor}`;

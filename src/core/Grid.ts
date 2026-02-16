@@ -79,6 +79,17 @@ export class Grid {
     return entities;
   }
 
+  public getPlayerPosition(): { x: number; y: number } | null {
+    for (let y = 0; y < this.size; y++) {
+      for (let x = 0; x < this.size; x++) {
+        if (this.cells[y][x]?.type === "PLAYER") {
+          return { x, y };
+        }
+      }
+    }
+    return null;
+  }
+
   public movePlayer(direction: Direction): {
     moved: boolean;
     damageDealt: number;
@@ -109,7 +120,7 @@ export class Grid {
         targetCell.hp = Math.max(0, targetCell.hp - playerEntry.entity.atk);
         playerEntry.entity.hp = Math.max(
           0,
-          playerEntry.entity.hp - targetCell.atk,
+          playerEntry.entity.hp - (targetCell.atk - playerEntry.entity.armor),
         );
         if (targetCell.hp <= 0) {
           this.setValue(playerEntry.x, playerEntry.y, null);
@@ -128,7 +139,7 @@ export class Grid {
           type: "MONSTER",
         };
       } else if (targetCell.type === "XP") {
-        playerEntry.entity.xp = (playerEntry.entity.xp || 0) + 1;
+        playerEntry.entity.xp = (playerEntry.entity.xp || 0) + 2;
         this.setValue(playerEntry.x, playerEntry.y, null);
         this.setValue(newX, newY, playerEntry.entity);
         return {

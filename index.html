@@ -9,12 +9,19 @@
   </head>
   <body>
     <div id="main-menu">
-      <button id="meadow-zone" class="zone-button">
-        Meadow <span id="win-counter-meadow" class="win-counter"></span>
-      </button>
-      <button id="construction-zone" class="zone-button" disabled>
-        Soon available ...
-      </button>
+      <div class="menu-content">
+        <h1 class="menu-title">Select a Zone</h1>
+        <div id="zone-selector">
+          <button id="prev-zone" class="zone-arrow">&lt;</button>
+          <div id="zone-display">
+            <h2 id="zone-name"></h2>
+            <div id="zone-image-placeholder"></div>
+            <p id="zone-description"></p>
+          </div>
+          <button id="next-zone" class="zone-arrow">&gt;</button>
+        </div>
+        <button id="start-zone-button">Enter Zone</button>
+      </div>
     </div>
     <div id="levelup-overlay" class="hidden">
       <div class="overlay-content">

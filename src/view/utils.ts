@@ -98,6 +98,41 @@ export function showVictoryScreen(onSelect: (stat: string) => void) {
   overlay.classList.add("visible");
 }
 
+export function showGameOverScreen(message: string, onAcknowledge: () => void) {
+  const overlay = document.getElementById("levelup-overlay");
+  const container = document.getElementById("upgrade-cards-container");
+  const title = overlay?.querySelector("h1");
+  const desc = overlay?.querySelector("p");
+  const skipButton = document.getElementById("skip-upgrade");
+
+  if (!overlay || !container || !title || !desc || !skipButton) return;
+
+  // Change texts for Game Over mode
+  title.innerText = "GAME OVER";
+  title.style.color = "#e74c3c"; // A sad red
+  desc.innerText = message;
+  container.innerHTML = ""; // Clear cards
+
+  // Create a single "button" to go back to menu
+  const backButton = document.createElement("div");
+  backButton.className = "upgrade-card"; // Re-use style
+  backButton.innerHTML = `<h3>Return to Menu</h3>`;
+  backButton.style.textAlign = "center";
+  backButton.onclick = () => {
+    overlay.classList.remove("visible");
+    onAcknowledge();
+    // Restore original title and colors for next time
+    title.innerText = "LEVEL UP !";
+    title.style.color = "#f1c40f";
+    desc.innerText = "Choose an upgrade to empower your sunflower";
+    skipButton.style.display = "block";
+  };
+  container.appendChild(backButton);
+
+  skipButton.style.display = "none";
+  overlay.classList.add("visible");
+}
+
 export function updateMenuUI() {
   const mainMenu = document.getElementById("main-menu");
   const winCounterMeadow = document.getElementById("win-counter-meadow");

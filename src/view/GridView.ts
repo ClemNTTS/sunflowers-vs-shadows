@@ -80,6 +80,9 @@ export class GridView {
           fgHealth.fill(0xe74c3c);
         } else if (entity.entity.type === "XP") {
           shape.star(0, 0, 5, 15, 8).fill(0x3498db);
+        } else if (entity.entity.type === "BOSS") {
+          shape.circle(0, 0, this.tileSize / 2.2).fill(0x9b59b6);
+          fgHealth.fill(0x9b59b6);
         }
 
         container.addChild(shape, text, healthGroup);
@@ -176,5 +179,45 @@ export class GridView {
 
     this.backgroundContainer.destroy({ children: true });
     this.entityContainer.destroy({ children: true });
+  }
+
+  private getTotalGridSize(gridSize: number): number {
+    return gridSize * this.tileSize + (gridSize - 1) * this.gap;
+  }
+
+  public centerContainers(
+    appWidth: number,
+    appHeight: number,
+    gridSize: number,
+  ) {
+    const totalSize = this.getTotalGridSize(gridSize);
+
+    const offsetX = (appWidth - totalSize) / 2;
+    const offsetY = (appHeight - totalSize) / 2;
+
+    this.backgroundContainer.x = offsetX;
+    this.backgroundContainer.y = offsetY;
+    this.entityContainer.x = offsetX;
+    this.entityContainer.y = offsetY;
+  }
+
+  public showDangerZone(x: number, y: number) {
+    const danger = new PIXI.Graphics()
+      .rect(0, 0, this.tileSize, this.tileSize)
+      .fill({ color: 0xe74c3c, alpha: 0.4 });
+
+    danger.x = x * (this.tileSize + this.gap);
+    danger.y = y * (this.tileSize + this.gap);
+
+    this.backgroundContainer.addChild(danger);
+
+    gsap.to(danger, {
+      alpha: 0.1,
+      duration: 0.4,
+      repeat: -1,
+      yoyo: true,
+    });
+
+    return danger;
   }
 }
