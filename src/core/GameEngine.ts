@@ -1,3 +1,4 @@
+
 import { GridView } from "../view/GridView";
 import { createStatsDiv, updatePlayerStats } from "../view/StatsRender";
 import { DIRECTIONS, VOID_PULSE } from "./constants";
@@ -43,15 +44,40 @@ export class GameEngine {
     this.zone = zone;
   }
 
-  public start() {
+  public async start() {
     setOverlayEvents(this);
     this.grid.init();
-    this.gridViewer.drawBackground(this.grid);
-    this.gridViewer.renderEntities(this.grid);
     createStatsDiv();
-    this.refreshView();
     this.setupInputs();
     console.log(this.grid);
+
+    const [texture, data, backgroundTexture] = await Promise.all([
+      PIXI.Assets.load("/assets/sprites/sunflower_animation.png"),
+      fetch("/assets/sprites/sunflower_animation.json").then((res) =>
+        res.json(),
+      ),
+      PIXI.Assets.load("/assets/background.jpg"),
+    ]);
+
+    const sheet = new PIXI.Spritesheet(texture, data);
+    await sheet.parse();
+
+    // Manually create animations
+    const frameTags = data.meta.frameTags;
+    const frameNames = Object.keys(data.frames);
+    for (const tag of frameTags) {
+      const textures = [];
+      for (let i = tag.from; i <= tag.to; i++) {
+        textures.push(sheet.textures[frameNames[i]]);
+      }
+      sheet.animations[tag.name] = textures;
+    }
+
+    this.gridViewer.setSpritesheet(sheet);
+    this.gridViewer.setBackgroundTexture(backgroundTexture);
+    this.gridViewer.drawBackground(this.grid);
+    this.refreshView();
+    this.gridViewer.playPlayerAnimation("idle");
   }
 
   public getGrid(): Grid {
@@ -160,7 +186,9 @@ export class GameEngine {
       }
 
       this.refreshView();
+
       if (moved && moved?.damageDealt > 0) {
+        this.gridViewer.playPlayerAnimation("attack");
         const pxX = this.gridViewer.gridToPixels(moved.targetPos.x);
         const pxY = this.gridViewer.gridToPixels(moved.targetPos.y);
 
@@ -170,6 +198,10 @@ export class GameEngine {
           `-${moved.damageDealt}`,
           0xe74c3c,
         );
+      } else if (moved && moved?.damageTaken > 0) {
+        this.gridViewer.playPlayerAnimation("beingHit");
+      } else {
+        this.gridViewer.playPlayerAnimation("idle");
       }
     };
     window.addEventListener("keydown", this.boundInputListener);

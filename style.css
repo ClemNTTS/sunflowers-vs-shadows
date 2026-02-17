@@ -198,7 +198,9 @@ body {
   position: fixed;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(30, 39, 46, 1);
+  background-image: url("/assets/background.jpg");
+  background-size: cover;
+  background-position: center;
   padding: 40px;
   z-index: 200;
   display: flex;
@@ -257,6 +259,8 @@ body {
   justify-content: center;
   font-style: italic;
   color: #7f8c8d;
+  background-size: cover;
+  background-position: center;
 }
 
 #zone-description {

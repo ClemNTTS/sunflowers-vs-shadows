@@ -93,6 +93,7 @@ export class Grid {
   public movePlayer(direction: Direction): {
     moved: boolean;
     damageDealt: number;
+    damageTaken: number;
     targetPos: { x: number; y: number };
     type: EntityType;
   } | null {
@@ -113,14 +114,19 @@ export class Grid {
         return {
           moved: true,
           damageDealt: 0,
+          damageTaken: 0,
           targetPos: { x: newX, y: newY },
           type: "PLAYER",
         };
       } else if (targetCell.type === "MONSTER" || targetCell.type === "BOSS") {
+        const damageTaken = Math.max(
+          0,
+          targetCell.atk - playerEntry.entity.armor,
+        );
         targetCell.hp = Math.max(0, targetCell.hp - playerEntry.entity.atk);
         playerEntry.entity.hp = Math.max(
           0,
-          playerEntry.entity.hp - (targetCell.atk - playerEntry.entity.armor),
+          playerEntry.entity.hp - damageTaken,
         );
         if (targetCell.hp <= 0) {
           this.setValue(playerEntry.x, playerEntry.y, null);
@@ -128,6 +134,7 @@ export class Grid {
           return {
             moved: true,
             damageDealt: playerEntry.entity.atk,
+            damageTaken: damageTaken,
             targetPos: { x: newX, y: newY },
             type: "MONSTER",
           };
@@ -135,6 +142,7 @@ export class Grid {
         return {
           moved: false,
           damageDealt: playerEntry.entity.atk,
+          damageTaken: damageTaken,
           targetPos: { x: newX, y: newY },
           type: "MONSTER",
         };
@@ -145,6 +153,7 @@ export class Grid {
         return {
           moved: true,
           damageDealt: 0,
+          damageTaken: 0,
           targetPos: { x: newX, y: newY },
           type: "XP",
         };

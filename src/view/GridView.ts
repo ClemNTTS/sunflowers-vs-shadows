@@ -6,6 +6,9 @@ import gsap from "gsap";
 export class GridView {
   private backgroundContainer: PIXI.Container;
   private entityContainer: PIXI.Container;
+  private sunflowerSheet: PIXI.Spritesheet | null = null;
+  private backgroundSprite: PIXI.Sprite | null = null;
+  private app: PIXI.Application;
   public readonly tileSize: number = 80;
   private gap: number = 10;
 
@@ -17,26 +20,53 @@ export class GridView {
       text: PIXI.Text;
       healthBar: PIXI.Graphics;
       healthGroup: PIXI.Container;
+      animatedSprite?: PIXI.AnimatedSprite;
     }
   > = new Map();
 
   constructor(app: PIXI.Application) {
+    this.app = app;
     this.backgroundContainer = new PIXI.Container();
     this.entityContainer = new PIXI.Container();
     app.stage.addChild(this.backgroundContainer);
     app.stage.addChild(this.entityContainer);
+
+    // Listen for resize events
+    app.renderer.on("resize", () => this.resizeBackground());
   }
 
   public gridToPixels(pos: number): number {
     return pos * (this.tileSize + this.gap) + this.tileSize / 2;
   }
 
+  public setSpritesheet(sheet: PIXI.Spritesheet) {
+    this.sunflowerSheet = sheet;
+  }
+
+  public setBackgroundTexture(texture: PIXI.Texture) {
+    if (texture) {
+      this.backgroundSprite = new PIXI.Sprite(texture);
+      this.app.stage.addChildAt(this.backgroundSprite, 0);
+      this.resizeBackground();
+    }
+  }
+
+  public resizeBackground() {
+    if (this.backgroundSprite) {
+      this.backgroundSprite.width = this.app.screen.width;
+      this.backgroundSprite.height = this.app.screen.height;
+    }
+  }
+
   public drawBackground(grid: Grid) {
+    // Clear previous background elements
+    this.backgroundContainer.removeChildren();
+
     for (let y = 0; y < grid.size; y++) {
       for (let x = 0; x < grid.size; x++) {
         const slot = new PIXI.Graphics()
           .roundRect(0, 0, this.tileSize, this.tileSize, 12)
-          .fill(0x1e272e); // Couleur un peu plus "DeepDark"
+          .fill({ color: 0x1e272e, alpha: 0.8 });
         slot.x = x * (this.tileSize + this.gap);
         slot.y = y * (this.tileSize + this.gap);
         this.backgroundContainer.addChild(slot);
@@ -54,6 +84,7 @@ export class GridView {
       if (!sprite) {
         const container = new PIXI.Container();
         const shape = new PIXI.Graphics();
+        let animatedSprite: PIXI.AnimatedSprite | undefined;
 
         const healthGroup = new PIXI.Container();
         const healthWidth = 40;
@@ -73,8 +104,15 @@ export class GridView {
         text.anchor.set(0.5);
         text.y = -this.tileSize / 2.2;
 
-        if (entity.entity.type === "PLAYER") {
-          shape.circle(0, 0, this.tileSize / 3).fill(0xf1c40f);
+        if (entity.entity.type === "PLAYER" && this.sunflowerSheet) {
+          const anim = new PIXI.AnimatedSprite(
+            this.sunflowerSheet.animations["idle"],
+          );
+          anim.anchor.set(0.5);
+          anim.scale.set(2); // Increase the scale
+          anim.animationSpeed = 0.1;
+          anim.play();
+          animatedSprite = anim;
         } else if (entity.entity.type === "MONSTER") {
           shape.poly([0, -18, 18, 18, -18, 18]).fill(0xe74c3c);
           fgHealth.fill(0xe74c3c);
@@ -85,13 +123,24 @@ export class GridView {
           fgHealth.fill(0x9b59b6);
         }
 
-        container.addChild(shape, text, healthGroup);
+        if (animatedSprite) {
+          container.addChild(animatedSprite);
+        } else {
+          container.addChild(shape);
+        }
+        container.addChild(text, healthGroup);
         container.x = this.gridToPixels(entity.x);
         container.y = this.gridToPixels(entity.y);
         container.scale.set(0);
 
         this.entityContainer.addChild(container);
-        sprite = { container, text, healthBar: fgHealth, healthGroup };
+        sprite = {
+          container,
+          text,
+          healthBar: fgHealth,
+          healthGroup,
+          animatedSprite,
+        };
         this.spriteMap.set(entity.entity, sprite);
 
         gsap.to(container.scale, {
@@ -219,5 +268,32 @@ export class GridView {
     });
 
     return danger;
+  }
+
+  public playPlayerAnimation(animName: "idle" | "attack" | "beingHit") {
+    const playerEntry = Array.from(this.spriteMap.entries()).find(
+      ([entity]) => entity.type === "PLAYER",
+    );
+
+    if (playerEntry && this.sunflowerSheet) {
+      const { animatedSprite } = playerEntry[1];
+
+      if (!animatedSprite) return;
+
+      animatedSprite.textures = this.sunflowerSheet.animations[animName];
+      animatedSprite.loop = animName === "idle";
+
+      if (animName === "attack") {
+        animatedSprite.animationSpeed = 0.2;
+      } else {
+        animatedSprite.animationSpeed = 0.1;
+      }
+
+      animatedSprite.play();
+
+      if (animName !== "idle") {
+        animatedSprite.onComplete = () => this.playPlayerAnimation("idle");
+      }
+    }
   }
 }
